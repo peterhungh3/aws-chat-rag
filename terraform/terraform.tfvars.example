@@ -1,0 +1,30 @@
+# AWS Configuration
+aws_region = "us-east-2"
+project_name = "aws-chat-rag"
+environment = "dev"  # "dev" or "prod" - affects NAT Gateway count (cost vs HA)
+
+# VPC Configuration
+vpc_cidr = "10.0.0.0/16"
+availability_zones = ["us-east-2a", "us-east-2b"]
+
+# ECS Configuration
+ecs_task_cpu = 256
+ecs_task_memory = 512
+ecs_desired_count = 1
+container_port = 8000
+
+# RDS Configuration
+db_instance_class = "db.t3.micro"
+db_name = "chatrag"
+db_username = "postgres"
+db_password = "CHANGE_ME_SECURE_PASSWORD"  # Change this!
+db_allocated_storage = 20
+db_multi_az = true
+
+# Redis Configuration
+redis_node_type = "cache.t3.micro"
+redis_num_cache_nodes = 1
+
+# GitHub Configuration (format: owner/repo)
+github_repo = "your-username/aws-chat-rag"
+
