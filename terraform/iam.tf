@@ -26,7 +26,7 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-# Additional policy for ECS task execution (ECR, CloudWatch)
+# Additional policy for ECS task execution (ECR, CloudWatch, Secrets Manager)
 resource "aws_iam_role_policy" "ecs_task_execution_additional" {
   name = "${var.project_name}-ecs-task-execution-additional"
   role = aws_iam_role.ecs_task_execution.id
@@ -51,6 +51,13 @@ resource "aws_iam_role_policy" "ecs_task_execution_additional" {
           "logs:PutLogEvents"
         ]
         Resource = "${aws_cloudwatch_log_group.ecs.arn}:*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
+        Resource = aws_secretsmanager_secret.db_password.arn
       }
     ]
   })
