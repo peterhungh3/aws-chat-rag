@@ -66,12 +66,37 @@ jobs:
           image: ${{ steps.build-image.outputs.image }}
 
       - name: Deploy to Amazon ECS
+        timeout-minutes: 15
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: ${{ env.ECS_SERVICE }}
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
+
+      - name: Check service status
+        continue-on-error: true
+        run: |
+          echo "Checking ECS service status..."
+          aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE }} \
+            --region ${{ env.AWS_REGION }} \
+            --query 'services[0].[runningCount,desiredCount,status]' \
+            --output table
+          
+          echo ""
+          echo "Checking target health..."
+          TG_ARN=$(aws elbv2 describe-target-groups --region ${{ env.AWS_REGION }} \
+            --query "TargetGroups[?contains(TargetGroupName, 'aws-chat-rag')].TargetGroupArn" \
+            --output text)
+          if [ ! -z "$TG_ARN" ]; then
+            aws elbv2 describe-target-health \
+              --target-group-arn $TG_ARN \
+              --region ${{ env.AWS_REGION }} \
+              --query 'TargetHealthDescriptions[*].[Target.Id,TargetHealth.State,TargetHealth.Reason]' \
+              --output table
+          fi
 
       - name: Deployment summary
         run: |
@@ -81,6 +106,8 @@ jobs:
           echo "**Cluster:** ${{ env.ECS_CLUSTER }}" >> $GITHUB_STEP_SUMMARY
           echo "**Service:** ${{ env.ECS_SERVICE }}" >> $GITHUB_STEP_SUMMARY
           echo "**Region:** ${{ env.AWS_REGION }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Note:** Health checks may take 3-5 minutes to complete. Service status may show 'unknown' until health checks pass." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Check the [ECS Console](https://console.aws.amazon.com/ecs/v2/clusters/${{ env.ECS_CLUSTER }}/services/${{ env.ECS_SERVICE }}) for details." >> $GITHUB_STEP_SUMMARY
 
