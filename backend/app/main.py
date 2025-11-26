@@ -18,7 +18,8 @@ app.add_middleware(
 )
 
 # Mount static files for frontend
-frontend_path = os.path.join(os.path.dirname(__file__), "../../frontend")
+# In Docker container: WORKDIR is /app, so frontend is at /app/frontend/
+frontend_path = os.path.join(os.getcwd(), "frontend")
 if os.path.exists(frontend_path):
     app.mount("/static", StaticFiles(directory=frontend_path), name="static")
 
