@@ -84,9 +84,9 @@ resource "aws_cloudwatch_metric_alarm" "alb_5xx_errors" {
   evaluation_periods  = 2
   metric_name         = "HTTPCode_Target_5XX_Count"
   namespace           = "AWS/ApplicationELB"
-  period              = 300
+  period              = 60
   statistic           = "Sum"
-  threshold           = 10
+  threshold           = 3
   alarm_description   = "This metric monitors ALB 5xx errors"
   treat_missing_data  = "notBreaching"
 
@@ -96,6 +96,29 @@ resource "aws_cloudwatch_metric_alarm" "alb_5xx_errors" {
 
   tags = {
     Name = "${var.project_name}-alb-5xx-errors-alarm"
+  }
+}
+
+# CloudWatch Alarm - ALB Healthy Host Count (Catches gaps with 0 healthy targets)
+resource "aws_cloudwatch_metric_alarm" "alb_healthy_hosts_low" {
+  alarm_name          = "${var.project_name}-alb-healthy-hosts-low"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "HealthyHostCount"
+  namespace           = "AWS/ApplicationELB"
+  period              = 60
+  statistic           = "Average"
+  threshold           = 1
+  alarm_description   = "This metric monitors if healthy host count drops below 1"
+  treat_missing_data  = "breaching"
+
+  dimensions = {
+    LoadBalancer = aws_lb.main.arn_suffix
+    TargetGroup  = aws_lb_target_group.app.arn_suffix
+  }
+
+  tags = {
+    Name = "${var.project_name}-alb-healthy-hosts-low-alarm"
   }
 }
 
