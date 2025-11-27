@@ -59,6 +59,3 @@ override.tf.json
 logs/
 *.log
 
-# Documentation (markdown files)
-*.md
-
